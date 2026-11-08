@@ -38,8 +38,8 @@ jobs:
 
       - name: Install OpenCode
         run: |
-          curl -fsSL https://opencode.ai/install | bash
-          echo "$HOME/.opencode/bin" >> "$GITHUB_PATH"
+          npm install -g opencode-ai@1.19.5
+          opencode --version
 
       - name: Resolve brief
         id: brief
