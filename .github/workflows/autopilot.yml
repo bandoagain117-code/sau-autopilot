@@ -1,0 +1,94 @@
+name: Autopilot
+
+on:
+  workflow_dispatch:
+    inputs:
+      brief:
+        description: "Task brief (overrides TASK.md when provided)"
+        required: false
+        type: string
+      model:
+        description: "OpenCode model"
+        required: false
+        default: "groq/openai/gpt-oss-120b"
+        type: string
+      build:
+        description: "Also export an Android debug APK after the agent run"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  agent:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+
+      - name: Create agent branch
+        run: |
+          git config user.name "sau-autopilot agent"
+          git config user.email "actions@users.noreply.github.com"
+          git checkout -b "agent/run-${{ github.run_number }}"
+
+      - name: Install OpenCode
+        run: |
+          curl -fsSL https://opencode.ai/install | bash
+          echo "$HOME/.opencode/bin" >> "$GITHUB_PATH"
+
+      - name: Resolve brief
+        id: brief
+        run: |
+          if [ -n "${{ inputs.brief }}" ]; then
+            printf '%s' "${{ inputs.brief }}" > /tmp/brief.txt
+          elif [ -f TASK.md ]; then
+            cp TASK.md /tmp/brief.txt
+          else
+            echo "No brief provided and no TASK.md found." >&2
+            exit 1
+          fi
+          echo "Brief:"; cat /tmp/brief.txt
+
+      - name: Run agent
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          opencode run -m "${{ inputs.model }}" "$(cat /tmp/brief.txt)"
+
+      - name: Commit and open PR if anything changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git add -A
+            git commit -m "autopilot run ${{ github.run_number }}"
+            git push -u origin "agent/run-${{ github.run_number }}"
+            gh pr create --title "Autopilot run ${{ github.run_number }}" \
+              --body "Automated agent run. Brief: see TASK.md / dispatch input. Review before merging." \
+              --base main --head "agent/run-${{ github.run_number }}" || true
+          else
+            echo "Agent made no changes."
+          fi
+
+      - name: Export Android debug APK (optional)
+        if: ${{ inputs.build }}
+        run: |
+          curl -fsSL -o /tmp/godot.zip https://github.com/godotengine/godot/releases/download/4.4-stable/Godot_v4.4-stable_linux.x86_64.zip
+          unzip -q /tmp/godot.zip -d /tmp/godot
+          curl -fsSL -o /tmp/templates.tpz https://github.com/godotengine/godot/releases/download/4.4-stable/Godot_v4.4-stable_export_templates.tpz
+          mkdir -p ~/.local/share/godot/export_templates/4.4.stable
+          unzip -q /tmp/templates.tpz -d /tmp/tpz && cp -r /tmp/tpz/templates/* ~/.local/share/godot/export_templates/4.4.stable/
+          /tmp/godot/Godot_v4.4-stable_linux.x86_64 --headless --path . --export-debug "Android" /tmp/slice-debug.apk
+
+      - name: Upload APK artifact
+        if: ${{ inputs.build }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: slice-debug-apk
+          path: /tmp/slice-debug.apk
+          if-no-files-found: warn

@@ -1,0 +1,4 @@
+.godot/
+*.apk
+verification/
+*.idsig
