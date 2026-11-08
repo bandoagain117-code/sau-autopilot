@@ -10,7 +10,7 @@ on:
       model:
         description: "OpenCode model"
         required: false
-        default: "groq/openai/gpt-oss-120b"
+        default: "groq/llama-3.3-70b-versatile"
         type: string
       build:
         description: "Also export an Android debug APK after the agent run"
