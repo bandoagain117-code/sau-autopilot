@@ -58,7 +58,8 @@ jobs:
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
-          opencode run -m "${{ inputs.model }}" "$(cat /tmp/brief.txt)"
+          RULES="STANDING RULES (never violate): (1) Only open TEXT files. Never open binary files - no images (.png/.jpg/.jpeg/.webp), no models (.glb/.gltf), no audio (.wav/.mp3/.ogg). To describe assets, list their file names with ls/find only. (2) Read large text files in slices with grep/sed -n, never the whole file at once. (3) Stay inside the brief. BRIEF: "
+          opencode run -m "${{ inputs.model }}" "$RULES$(cat /tmp/brief.txt)"
 
       - name: Commit and open PR if anything changed
         env:
