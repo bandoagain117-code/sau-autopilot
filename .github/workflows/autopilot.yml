@@ -10,7 +10,7 @@ on:
       model:
         description: "OpenCode model"
         required: false
-        default: "groq/llama-3.3-70b-versatile"
+        default: "google/gemini-2.5-flash"
         type: string
       build:
         description: "Also export an Android debug APK after the agent run"
@@ -57,9 +57,17 @@ jobs:
       - name: Run agent
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
         run: |
           RULES="STANDING RULES (never violate): (1) Only open TEXT files. Never open binary files - no images (.png/.jpg/.jpeg/.webp), no models (.glb/.gltf), no audio (.wav/.mp3/.ogg). To describe assets, list their file names with ls/find only. (2) Read large text files in slices with grep/sed -n, never the whole file at once. (3) Stay inside the brief. BRIEF: "
-          opencode run -m "${{ inputs.model }}" "$RULES$(cat /tmp/brief.txt)"
+          for attempt in 1 2; do
+            if opencode run -m "${{ inputs.model }}" "$RULES$(cat /tmp/brief.txt)"; then
+              break
+            fi
+            echo "Agent attempt $attempt failed; retrying once after 30s..."
+            sleep 30
+          done
 
       - name: Commit and open PR if anything changed
         env:
