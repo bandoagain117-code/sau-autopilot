@@ -10,7 +10,7 @@ on:
       model:
         description: "OpenCode model"
         required: false
-        default: "google/gemini-2.5-flash"
+        default: default: "google/gemini-3.8-flash"
         type: string
       build:
         description: "Also export an Android debug APK after the agent run"
