@@ -21,6 +21,11 @@ expansion calls for — without ever inventing canon.
 - Voice: adult, dread by implication, never gore. Concrete and layered —
   2–3 full paragraphs per entry. No modern slang, no game mechanics,
   no fourth wall.
+- Register: this codex is a HOLY book — the awe of the game lives in
+  it. Write with reverence and mythic weight (think Darksiders'
+  biblical grandeur, Final Fantasy's sacred scale): grave, illuminated,
+  monumental where the subject is monumental. Awe comes from the shadow
+  a small thing casts, not from shouting.
 - BANNED template phrases, in any variation: "crews pass through",
   "do not linger", "come back quieter", "cross back quieter",
   "does not need explaining", "nobody explains", "nobody says why",
